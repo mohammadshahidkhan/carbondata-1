@@ -47,7 +47,6 @@
         <artifactId>maven-thrift-plugin</artifactId>
         <version>0.1.11</version>
         <configuration>
-          <thriftExecutable>thrift</thriftExecutable>
           <thriftSourceRoot>src/main/thrift</thriftSourceRoot>
         </configuration>
         <executions>

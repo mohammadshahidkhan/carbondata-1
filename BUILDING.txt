@@ -1,0 +1,34 @@
+Build instructions for Carbon
+
+----------------------------------------------------------------------------------
+
+Building on Unix and Windows System
+----------------------------------------------------------------------------------
+Requirements:
+
+* JDK 1.7+
+* Maven 3.1.1 or later 
+* Apache Thrift 0.9.3
+* Internet connection for first build (to fetch all dependencies)
+
+----------------------------------------------------------------------------------
+
+Maven build goals:
+
+ * Clean                     : mvn clean
+ * Compile                   : mvn compile 
+ 
+ * Run tests                 : mvn test 
+ * Create Package            : mvn clean package [-Phadoop-2.7.2] 
+                               Usage : For building with hadoop X version
+                               Add profile for respective hadoop version in main pom.xml;
+                               i.e. carbondata/pom.xml.
+                               Packaging command: mvn clean package -Phadoop-X
+ * Complete build            : mvn clean install -Phadoop-X
+                               Used to run java checkstyle, scala checkstyle, test and to make package with hadoop-X version.
+ * Run checkstyle for java   : mvn checkstyle:checkstyle
+ * Run scala checkstyle      : mvn scalastyle:check
+ * Run integration test      : mvn test -Pintegration-test 
+                               By default the integration test case will not execute mvn test, 
+                               use the porofile "integration-test" to execute integration Test.
+
