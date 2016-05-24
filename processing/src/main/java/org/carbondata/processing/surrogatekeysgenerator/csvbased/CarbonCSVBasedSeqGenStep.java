@@ -833,7 +833,7 @@ public class CarbonCSVBasedSeqGenStep extends BaseStep {
         if (obj.equals(valueToCheckAgainst)) {
           rowValue[i] = CarbonCommonConstants.MEMBER_DEFAULT_VAL;
         }
-      } else if (i > meta.memberMapping.length) {
+      } else if (i > meta.memberMapping.length + meta.noDictionaryCols.length) {
         return rowValue;
       } else {
         rowValue[i] = CarbonCommonConstants.MEMBER_DEFAULT_VAL;
@@ -884,7 +884,7 @@ public class CarbonCSVBasedSeqGenStep extends BaseStep {
     for (int j = 0; j < inputColumnsSize; j++) {
       String columnName = metaColumnNames[j];
       String foreignKeyColumnName = foreignKeyMappingColumns[j];
-      r[j] = ((String) r[j]).trim();
+      r[j] = null != r[j] ? ((String) r[j]).trim() : CarbonCommonConstants.MEMBER_DEFAULT_VAL;
       // TODO check if it is ignore dictionary dimension or not . if yes directly write byte buffer
 
       if (null != meta.noDictionaryCols && isDimensionNoDictionary(meta.noDictionaryCols,
