@@ -26,6 +26,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.language.implicitConversions
 
 import org.apache.spark.sql._
+import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference}
 import org.apache.spark.sql.execution.{RunnableCommand, SparkPlan}
 import org.apache.spark.sql.hive.HiveContext
@@ -1796,12 +1797,19 @@ private[sql] case class ShowLoads(
 
 
   override def run(sqlContext: SQLContext): Seq[Row] = {
+    val LOGGER = LogServiceFactory.getLogService(this.getClass.getCanonicalName)
     val schemaName = getDB.getDatabaseName(schemaNameOp, sqlContext)
-    var carbonTable = org.carbondata.core.carbon.metadata.CarbonMetadata.getInstance()
+    val carbonTable = org.carbondata.core.carbon.metadata.CarbonMetadata.getInstance()
       .getCarbonTable(schemaName + '_' + tableName)
-    val path = carbonTable.getMetaDataFilepath()
+    var path : String = ""
+    if(null != carbonTable){
+      path = carbonTable.getMetaDataFilepath()
+    } else {
+      LOGGER.audit(s"Table Not Found: $tableName")
+      throw new NoSuchTableException
+    }
 
-    var segmentStatusManager = new SegmentStatusManager(new AbsoluteTableIdentifier
+    val segmentStatusManager = new SegmentStatusManager(new AbsoluteTableIdentifier
     (CarbonProperties.getInstance().getProperty(CarbonCommonConstants.STORE_LOCATION),
       new CarbonTableIdentifier(schemaName, tableName)
     )
