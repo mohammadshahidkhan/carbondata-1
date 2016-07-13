@@ -36,9 +36,12 @@ import org.carbondata.core.cache.dictionary.Dictionary;
 import org.carbondata.core.constants.CarbonCommonConstants;
 import org.carbondata.core.file.manager.composite.IFileManagerComposite;
 import org.carbondata.core.keygenerator.KeyGenException;
+import org.carbondata.core.keygenerator.directdictionary.DirectDictionaryGenerator;
+import org.carbondata.core.keygenerator.directdictionary.DirectDictionaryKeyGeneratorFactory;
 import org.carbondata.core.writer.HierarchyValueWriterForCSV;
 import org.carbondata.processing.datatypes.GenericDataType;
 import org.carbondata.processing.schema.metadata.ArrayWrapper;
+import org.carbondata.processing.schema.metadata.ColumnSchemaDetails;
 import org.carbondata.processing.schema.metadata.ColumnsInfo;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -145,6 +148,28 @@ public abstract class CarbonCSVBasedDimSurrogateKeyGen {
     key = dicCache.getSurrogateKey(tuple);
     return key;
   }
+
+  /**
+   * @param tuple         The string value whose surrogate key will be gennerated.
+   * @param tabColumnName The K of dictionaryCaches Map, for example "tablename_columnname"
+   */
+  public Integer generateSurrogateKeys(String tuple, String tabColumnName, String columnId) throws KettleException {
+    Integer key = null;
+    Dictionary dicCache = dictionaryCaches.get(tabColumnName);
+    if (null == dicCache) {
+      ColumnSchemaDetails columnSchemaDetails =
+          this.columnsInfo.getColumnSchemaDetailsWrapper().get(columnId);
+      if (columnSchemaDetails.isDirectDictionary()) {
+        DirectDictionaryGenerator directDictionaryGenerator = DirectDictionaryKeyGeneratorFactory
+            .getDirectDictionaryGenerator(columnSchemaDetails.getColumnType());
+        key = directDictionaryGenerator.generateDirectSurrogateKey(tuple);
+      }
+    } else {
+      key = dicCache.getSurrogateKey(tuple);
+    }
+    return key;
+  }
+
 
   public Integer generateSurrogateKeysForTimeDims(String tuple, String columnName, int index,
       Object[] props) throws KettleException {

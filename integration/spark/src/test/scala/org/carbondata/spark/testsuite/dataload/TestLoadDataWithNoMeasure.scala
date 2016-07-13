@@ -33,15 +33,15 @@ import org.scalatest.BeforeAndAfterAll
 class TestLoadDataWithNoMeasure extends QueryTest with BeforeAndAfterAll {
 
   override def beforeAll {
-    sql("DROP TABLE IF EXISTS nomeasureTest_sd")
-    sql(
-      "CREATE TABLE nomeasureTest (empno String, doj String) STORED BY 'org.apache.carbondata" +
-        ".format'"
-    )
-    val currentDirectory = new File(this.getClass.getResource("/").getPath + "/../../")
-      .getCanonicalPath
-    val testData = currentDirectory + "/src/test/resources/datasample.csv"
-    sql("LOAD DATA LOCAL INPATH '" + testData + "' into table nomeasureTest")
+//    sql("DROP TABLE IF EXISTS nomeasureTest_sd")
+//    sql(
+//      "CREATE TABLE nomeasureTest (empno String, doj String) STORED BY 'org.apache.carbondata" +
+//        ".format'"
+//    )
+//    val currentDirectory = new File(this.getClass.getResource("/").getPath + "/../../")
+//      .getCanonicalPath
+//    val testData = currentDirectory + "/src/test/resources/datasample.csv"
+//    sql("LOAD DATA LOCAL INPATH '" + testData + "' into table nomeasureTest")
   }
 
   test("test data loading and validate query output") {
@@ -116,7 +116,7 @@ class TestLoadDataWithNoMeasure extends QueryTest with BeforeAndAfterAll {
     val testData = currentDirectory + "/src/test/resources/datasingleComplexCol.csv"
     sql("LOAD DATA LOCAL INPATH '" + testData + "' into table nomeasureTest_scd options " +
       "('DELIMITER'=',','QUOTECHAR'='\"','FILEHEADER'='cityDetail'," +
-      "'COMPLEX_DELIMITER_LEVEL_1'=':')"
+      "'COMPLEX_DELIMITER_LEVEL_1'='$')"
     )
   }
 

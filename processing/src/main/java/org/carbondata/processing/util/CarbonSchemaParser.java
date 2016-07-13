@@ -1200,6 +1200,14 @@ public final class CarbonSchemaParser {
           new ColumnSchemaDetails(cDimension.getColName(), cDimension.getDataType(),
               CarbonUtil.hasEncoding(cDimension.getEncoder(), Encoding.DIRECT_DICTIONARY));
       columnSchemaDetailsMap.put(cDimension.getColumnSchema().getColumnUniqueId(), details);
+      if (cDimension.isComplex()) {
+        List<CarbonDimension> childDims = cDimension.getListOfChildDimensions();
+        for (CarbonDimension childDim : childDims) {
+          details = new ColumnSchemaDetails(childDim.getColName(), childDim.getDataType(),
+              CarbonUtil.hasEncoding(childDim.getEncoder(), Encoding.DIRECT_DICTIONARY));
+          columnSchemaDetailsMap.put(childDim.getColumnSchema().getColumnUniqueId(), details);
+        }
+      }
     }
     columnSchemaDetailsWrapper.setColumnSchemaDetailsMap(columnSchemaDetailsMap);
     return columnSchemaDetailsWrapper;
