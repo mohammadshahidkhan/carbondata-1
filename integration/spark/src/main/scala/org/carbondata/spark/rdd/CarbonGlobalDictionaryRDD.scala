@@ -66,7 +66,9 @@ case class PrimitiveParser(dimension: CarbonDimension,
   }
 
   def parseString(input: String): Unit = {
-    if (hasDictEncoding) {
+    // avoiding adding null value to the set as by defaukt we are adding
+    // a common constant value '@NU#LL$!' for handling the null value.
+    if (null != input && hasDictEncoding) {
       set.add(input)
     }
   }

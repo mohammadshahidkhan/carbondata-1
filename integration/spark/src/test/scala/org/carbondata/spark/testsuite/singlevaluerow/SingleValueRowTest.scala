@@ -17,68 +17,52 @@
  * under the License.
  */
 
-package org.carbondata.spark.testsuite.measurenullvalue
+package org.carbondata.spark.testsuite.singlevaluerow
+
+import java.io.File
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.common.util.CarbonHiveContext._
 import org.apache.spark.sql.common.util.QueryTest
-import org.scalatest.BeforeAndAfterAll
-
 import org.carbondata.core.constants.CarbonCommonConstants
 import org.carbondata.core.util.CarbonProperties
+import org.scalatest.BeforeAndAfterAll
 
-class NullMeasureValueTestCaseAggregate extends QueryTest with BeforeAndAfterAll {
+class SingleValueRowTest extends QueryTest with BeforeAndAfterAll {
 
   override def beforeAll {
     sql(
-      "CREATE TABLE IF NOT EXISTS t3 (ID Int, date Timestamp, country String, name String, " +
+      "CREATE TABLE IF NOT EXISTS singleValueRowTable (ID Int, date Timestamp, country String, " +
+        "name String, " +
         "phonetype String, serialname String, salary Int) STORED BY 'org.apache.carbondata.format'"
     )
     CarbonProperties.getInstance()
       .addProperty(CarbonCommonConstants.CARBON_TIMESTAMP_FORMAT, "yyyy/mm/dd")
-    sql("LOAD DATA LOCAL INPATH './src/test/resources/nullmeasurevalue.csv' into table t3");
+    val currentDirectory = new File(this.getClass.getResource("/").getPath + "/../../")
+      .getCanonicalPath
+    var csvFilePath = currentDirectory + "/src/test/resources/withsinglevaluerow.csv"
+    sql(
+      "LOAD DATA LOCAL INPATH '" + csvFilePath + "' into table " +
+        "singleValueRowTable"
+    );
   }
 
-  test("select count(salary) from t3") {
+  test("select count(ID) from singleValueRowTable") {
     checkAnswer(
-      sql("select count(salary) from t3"),
-      Seq(Row(0)))
+      sql("select count(ID) from singleValueRowTable"),
+      Seq(Row(3))
+    )
   }
-  test("select count(ditinct salary) from t3") {
+
+  test("select ID from singleValueRowTable") {
     checkAnswer(
-      sql("select count(distinct salary) from t3"),
-      Seq(Row(0)))
+      sql("select ID from singleValueRowTable"),
+      Seq(Row(1),Row(2),Row(3))
+    )
   }
-  
-  test("select sum(salary) from t3") {
-    checkAnswer(
-      sql("select sum(salary) from t3"),
-      Seq(Row(null)))
-  }
-  test("select avg(salary) from t3") {
-    checkAnswer(
-      sql("select avg(salary) from t3"),
-      Seq(Row(null)))
-  }
-  
-   test("select max(salary) from t3") {
-    checkAnswer(
-      sql("select max(salary) from t3"),
-      Seq(Row(null)))
-   }
-   test("select min(salary) from t3") {
-    checkAnswer(
-      sql("select min(salary) from t3"),
-      Seq(Row(null)))
-   }
-   test("select sum(distinct salary) from t3") {
-    checkAnswer(
-      sql("select sum(distinct salary) from t3"),
-      Seq(Row(null)))
-   }
-   
+
   override def afterAll {
-    sql("drop table t3")
+    sql("drop table singleValueRowTable")
     CarbonProperties.getInstance()
       .addProperty(CarbonCommonConstants.CARBON_TIMESTAMP_FORMAT, "dd-MM-yyyy")
   }
