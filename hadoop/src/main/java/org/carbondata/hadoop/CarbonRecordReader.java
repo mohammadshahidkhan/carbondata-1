@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.carbondata.core.cache.dictionary.Dictionary;
+import org.carbondata.core.carbon.datastore.block.BlockletInfos;
 import org.carbondata.core.carbon.datastore.block.TableBlockInfo;
 import org.carbondata.core.iterator.CarbonIterator;
 import org.carbondata.core.util.CarbonUtil;
@@ -40,10 +41,12 @@ public class CarbonRecordReader<T> extends RecordReader<Void, T> {
       throws IOException, InterruptedException {
     CarbonInputSplit carbonInputSplit = (CarbonInputSplit) split;
     List<TableBlockInfo> tableBlockInfoList = new ArrayList<TableBlockInfo>();
+    BlockletInfos blockletInfos = new BlockletInfos(carbonInputSplit.getNumberOfBlocklets(), 0,
+        carbonInputSplit.getNumberOfBlocklets());
     tableBlockInfoList.add(
         new TableBlockInfo(carbonInputSplit.getPath().toString(), carbonInputSplit.getStart(),
             carbonInputSplit.getSegmentId(), carbonInputSplit.getLocations(),
-            carbonInputSplit.getLength()));
+            carbonInputSplit.getLength(), blockletInfos));
     queryModel.setTableBlockInfos(tableBlockInfoList);
     readSupport
         .intialize(queryModel.getProjectionColumns(), queryModel.getAbsoluteTableIdentifier());

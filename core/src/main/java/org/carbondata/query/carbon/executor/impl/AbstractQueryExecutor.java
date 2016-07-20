@@ -20,6 +20,7 @@ package org.carbondata.query.carbon.executor.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -98,6 +99,10 @@ public abstract class AbstractQueryExecutor<E> implements QueryExecutor<E> {
     queryModel.setStatisticsRecorder(queryProperties.queryStatisticsRecorder);
     QueryUtil.resolveQueryModel(queryModel);
     QueryStatistic queryStatistic = new QueryStatistic();
+    // sort the block info
+    // so block will be loaded in sorted order this will be required for
+    // query execution
+    Collections.sort(queryModel.getTableBlockInfos());
     // get the table blocks
     try {
       queryProperties.dataBlocks = BlockIndexStore.getInstance()
@@ -224,8 +229,11 @@ public abstract class AbstractQueryExecutor<E> implements QueryExecutor<E> {
     // query
     // and query will be executed based on that infos
     for (int i = 0; i < queryProperties.dataBlocks.size(); i++) {
-      blockExecutionInfoList
-          .add(getBlockExecutionInfoForBlock(queryModel, queryProperties.dataBlocks.get(i)));
+      blockExecutionInfoList.add(
+          getBlockExecutionInfoForBlock(queryModel, queryProperties.dataBlocks.get(i),
+              queryModel.getTableBlockInfos().get(i).getBlockletInfos().getStartBlockletNumber(),
+              queryModel.getTableBlockInfos().get(i).getBlockletInfos()
+                  .getNumberOfBlockletToScan()));
     }
     queryProperties.complexDimensionInfoMap =
         blockExecutionInfoList.get(blockExecutionInfoList.size() - 1).getComlexDimensionInfoMap();
@@ -242,7 +250,8 @@ public abstract class AbstractQueryExecutor<E> implements QueryExecutor<E> {
    * @throws QueryExecutionException any failure during block info creation
    */
   protected BlockExecutionInfo getBlockExecutionInfoForBlock(QueryModel queryModel,
-      AbstractIndex blockIndex) throws QueryExecutionException {
+      AbstractIndex blockIndex, int startBlockletIndex, int numberOfBlockletToScan)
+      throws QueryExecutionException {
     BlockExecutionInfo blockExecutionInfo = new BlockExecutionInfo();
     SegmentProperties segmentProperties = blockIndex.getSegmentProperties();
     List<CarbonDimension> tableBlockDimensions = segmentProperties.getDimensions();
@@ -258,6 +267,8 @@ public abstract class AbstractQueryExecutor<E> implements QueryExecutor<E> {
         QueryUtil.getMaskedByteRange(updatedQueryDimension, blockKeyGenerator);
     int[] maksedByte =
         QueryUtil.getMaskedByte(blockKeyGenerator.getKeySizeInBytes(), maskByteRangesForBlock);
+    blockExecutionInfo.setStartBlockletIndex(startBlockletIndex);
+    blockExecutionInfo.setNumberOfBlockletToScan(numberOfBlockletToScan);
     blockExecutionInfo.setDimensionsExistInQuery(updatedQueryDimension.size() > 0);
     blockExecutionInfo.setDataBlock(blockIndex);
     blockExecutionInfo.setBlockKeyGenerator(blockKeyGenerator);

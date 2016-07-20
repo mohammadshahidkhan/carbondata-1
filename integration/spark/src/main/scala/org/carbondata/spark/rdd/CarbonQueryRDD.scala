@@ -33,7 +33,7 @@ import org.apache.spark.sql.hive.DistributionUtil
 
 import org.carbondata.common.logging.LogServiceFactory
 import org.carbondata.core.cache.dictionary.Dictionary
-import org.carbondata.core.carbon.datastore.block.{Distributable, TableBlockInfo}
+import org.carbondata.core.carbon.datastore.block.{BlockletInfos, Distributable, TableBlockInfo}
 import org.carbondata.core.carbon.querystatistics.{QueryStatistic, QueryStatisticsRecorder}
 import org.carbondata.core.iterator.CarbonIterator
 import org.carbondata.hadoop.{CarbonInputFormat, CarbonInputSplit}
@@ -106,12 +106,15 @@ class CarbonQueryRDD[V: ClassTag](
     if (!splits.isEmpty) {
       val carbonInputSplits = splits.asScala.map(_.asInstanceOf[CarbonInputSplit])
 
-      val blockList = carbonInputSplits.map(inputSplit =>
+      val blockListTemp = carbonInputSplits.map(inputSplit =>
         new TableBlockInfo(inputSplit.getPath.toString,
           inputSplit.getStart, inputSplit.getSegmentId,
-          inputSplit.getLocations, inputSplit.getLength
-        ).asInstanceOf[Distributable]
+          inputSplit.getLocations, inputSplit.getLength,
+          new BlockletInfos(inputSplit.getNumberOfBlocklets, 0, inputSplit.getNumberOfBlocklets)
+        )
       )
+      val blockList = CarbonLoaderUtil.
+        distributeBlockLets(blockListTemp.asJava, defaultParallelism).asScala
       if (blockList.nonEmpty) {
         // group blocks to nodes, tasks
         val startTime = System.currentTimeMillis

@@ -39,6 +39,7 @@ import org.carbondata.core.carbon.datastore.DataRefNodeFinder;
 import org.carbondata.core.carbon.datastore.IndexKey;
 import org.carbondata.core.carbon.datastore.SegmentTaskIndexStore;
 import org.carbondata.core.carbon.datastore.block.AbstractIndex;
+import org.carbondata.core.carbon.datastore.block.BlockletInfos;
 import org.carbondata.core.carbon.datastore.block.SegmentProperties;
 import org.carbondata.core.carbon.datastore.block.TableBlockInfo;
 import org.carbondata.core.carbon.datastore.exception.IndexBuilderException;
@@ -272,7 +273,7 @@ public class CarbonInputFormat<T> extends FileInputFormat<Void, T> {
       }
 
       if (filterPredicates == null) {
-        return getSplitsInternal(job);
+        return getSplitsNonFilter(job);
       } else {
         if (filterPredicates instanceof Expression) {
           //process and resolve the expression.
@@ -287,6 +288,19 @@ public class CarbonInputFormat<T> extends FileInputFormat<Void, T> {
     } catch (Exception ex) {
       throw new IOException(ex);
     }
+  }
+
+  /**
+   * the method will return the blocks to be scanned with blocklets info
+   *
+   * @param job
+   * @return
+   * @throws IOException
+   * @throws IndexBuilderException
+   */
+  private List<InputSplit> getSplitsNonFilter(JobContext job)
+      throws IOException, IndexBuilderException {
+    return getSplits(job, null);
   }
 
   private List<InputSplit> getSplitsInternal(JobContext job) throws IOException {
@@ -332,7 +346,7 @@ public class CarbonInputFormat<T> extends FileInputFormat<Void, T> {
         TableBlockInfo tableBlockInfo = leafNode.getTableBlockInfo();
         result.add(new CarbonInputSplit(segmentNo, new Path(tableBlockInfo.getFilePath()),
             tableBlockInfo.getBlockOffset(), tableBlockInfo.getBlockLength(),
-            tableBlockInfo.getLocations()));
+            tableBlockInfo.getLocations(), tableBlockInfo.getBlockletInfos().getNoOfBlockLets()));
       }
     }
     return result;
@@ -441,7 +455,6 @@ public class CarbonInputFormat<T> extends FileInputFormat<Void, T> {
       FilterExpressionProcessor filterExpressionProcessor,
       AbsoluteTableIdentifier absoluteTableIdentifier, FilterResolverIntf resolver,
       String segmentId) throws IndexBuilderException, IOException {
-
     QueryStatisticsRecorder recorder = new QueryStatisticsRecorder("");
     QueryStatistic statistic = new QueryStatistic();
     Map<String, AbstractIndex> segmentIndexMap =
@@ -495,9 +508,12 @@ public class CarbonInputFormat<T> extends FileInputFormat<Void, T> {
       // identify table blocks
       for (InputSplit inputSplit : getSplitsInternal(newJob)) {
         CarbonInputSplit carbonInputSplit = (CarbonInputSplit) inputSplit;
+        BlockletInfos blockletInfos = new BlockletInfos(carbonInputSplit.getNumberOfBlocklets(), 0,
+            carbonInputSplit.getNumberOfBlocklets());
         tableBlockInfoList.add(
             new TableBlockInfo(carbonInputSplit.getPath().toString(), carbonInputSplit.getStart(),
-                segmentId, carbonInputSplit.getLocations(), carbonInputSplit.getLength()));
+                segmentId, carbonInputSplit.getLocations(), carbonInputSplit.getLength(),
+                blockletInfos));
       }
 
       Map<String, List<TableBlockInfo>> segmentToTableBlocksInfos = new HashMap<>();
